@@ -5,7 +5,7 @@
       "latest-version": "1.0.1",
       "download-url": "https://github.com/kkcafe/public/releases/download/v0.0.3/EasharingPhotoEnhancer_setup.exe",
       "changelog": "This is an example changelog for Windows. Go on...",
-      "mandatory": false
+      "mandatory-update": false
     }
   }
 }
