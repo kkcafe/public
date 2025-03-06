@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图片文件二进制预览</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .preview-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-preview {
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-width: 300px;
+        }
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+        }
+        .data-preview {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 15px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        .highlight {
+            color: #c00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>图片文件预览演示</h2>
+    
+    <input type="file" id="fileInput" accept="image/*" />
+    
+    <div class="preview-container" id="previewContainer" style="display: none;">
+        <div class="image-preview">
+            <h3>图片预览</h3>
+            <img id="imagePreview" alt="图片预览" />
+        </div>
+        
+        <div class="data-preview">
+            <h3>文件信息</h3>
+            <p>文件名: <span id="fileName"></span></p>
+            <p>类型: <span id="fileType"></span></p>
+            <p>尺寸: <span id="imageDimensions"></span></p>
+            <p>大小: <span id="fileSize"></span></p>
+			<p>url: <span id="url"></span></p>
+            
+            <h3>二进制头信息（HEX）</h3>
+            <div id="binaryHeader"></div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+
+        fileInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                alert('请选择有效的图片文件');
+                return;
+            }
+
+            // 显示预览容器
+            previewContainer.style.display = 'flex';
+
+            // 显示图片预览
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                
+                // 图片加载后获取尺寸
+                imagePreview.onload = () => {
+                    document.getElementById('imageDimensions').textContent = 
+                        `${imagePreview.naturalWidth} × ${imagePreview.naturalHeight} 像素`;
+						//document.getElementById('url').textContent = imagePreview.src;
+                };
+            };
+			console.log("file",file);
+            reader.readAsDataURL(file);
+
+            // 显示文件信息
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileType').textContent = file.type;
+            document.getElementById('fileSize').textContent = 
+                `${(file.size / 1024).toFixed(2)} KB (${file.size.toLocaleString()} 字节)`;
+
+            // 读取二进制数据
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                // 显示前128字节的HEX格式
+                const headerBytes = uint8Array.slice(0, 128);
+                const hexArray = Array.from(headerBytes, byte => 
+                    byte.toString(16).padStart(2, '0')
+                );
+                
+                // 格式化为16字节/行
+                let hexDisplay = '';
+                for (let i = 0; i < hexArray.length; i += 16) {
+                    const line = hexArray.slice(i, i + 16).join(' ');
+                    hexDisplay += `<div>${i.toString(16).padStart(4, '0')}: ${line}</div>`;
+                }
+                
+                document.getElementById('binaryHeader').innerHTML = hexDisplay;
+            } catch (error) {
+                console.error('二进制数据读取失败:', error);
+            }
+        });
+
+        // 图片加载错误处理
+        imagePreview.onerror = () => {
+            imagePreview.alt = '图片加载失败';
+            document.getElementById('imageDimensions').textContent = '无法获取尺寸';
+        };
+    </script>
+</body>
+</html>
